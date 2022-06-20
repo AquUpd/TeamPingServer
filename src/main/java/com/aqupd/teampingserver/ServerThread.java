@@ -22,33 +22,39 @@ public class ServerThread extends Thread {
       String text = "";
       int step = 0;
       boolean waitfordata = false;
+      boolean init = true;
       JsonObject data;
 
       do {
         text = reader.readLine();
-        if (text.equals("CONNECT") && step == 0) {
-          writer.println("YES");
-          System.out.println(step + " done!");
-          step++;
-        } else if (text.equals("DATA") && step == 1) {
-          writer.println("YES");
-          waitfordata = true;
-          System.out.println(step + " done!");
-          step++;
-        } else if (waitfordata && step == 2) {
-          data = JsonParser.parseString(text).getAsJsonObject();
-          waitfordata = false;
-          //Some kind of check in the future
-          System.out.println(step + " done! " + data);
-          if(true){
-            writer.println("SUCCESS");
-          } else {
-            writer.println("NOTSUCCESS");
-            break;
+        if (init) {
+          if (text.equals("CONNECT") && step == 0) {
+            writer.println("YES");
+            System.out.println(step + " done!");
+            step++;
+          } else if (text.equals("DATA") && step == 1) {
+            writer.println("YES");
+            waitfordata = true;
+            System.out.println(step + " done!");
+            step++;
+          } else if (waitfordata && step == 2) {
+            data = JsonParser.parseString(text).getAsJsonObject();
+            waitfordata = false;
+            //Some kind of check in the future
+            System.out.println(step + " done! " + data);
+            if (true) {
+              writer.println("SUCCESS");
+            } else {
+              writer.println("NOTSUCCESS");
+              break;
+            }
+            step++;
+          } else if (text.equals("YES") && step == 3) {
+            System.out.println(step + " done! Waiting for new data");
+            init = false;
           }
-          step++;
-        } else if (text.equals("YES") && step == 3) {
-          System.out.println(step + " done! Waiting for new data");
+        } else {
+          System.out.println(text);
         }
       } while (!text.equals("DISCONNECT"));
 
