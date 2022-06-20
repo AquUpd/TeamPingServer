@@ -12,7 +12,7 @@ public class Main {
 
       while (true) {
         Socket socket = serverSocket.accept();
-        System.out.println("New client connected! " + socket.getLocalAddress() + ":" + socket.getLocalPort());
+        System.out.println("New client connected! " + socket.getRemoteSocketAddress());
 
         new ServerThread(socket).start();
       }
