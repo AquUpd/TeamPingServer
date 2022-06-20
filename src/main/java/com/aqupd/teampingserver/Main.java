@@ -5,9 +5,9 @@ import java.net.*;
 
 public class Main {
   public static void main(String[] args) {
-    try (ServerSocket serverSocket = new ServerSocket(13577)) {
+    try (ServerSocket serverSocket = new ServerSocket(28754)) {
 
-      System.out.println("Server is listening on port " + 13577);
+      System.out.println("Server is listening on port " + serverSocket.getLocalPort());
 
       while (true) {
         Socket socket = serverSocket.accept();

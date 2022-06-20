@@ -8,9 +8,7 @@ import java.net.*;
 public class ServerThread extends Thread {
   private final Socket socket;
 
-  public ServerThread(Socket socket) {
-    this.socket = socket;
-  }
+  public ServerThread(Socket socket) {this.socket = socket;}
 
   public void run() {
     try {
@@ -25,7 +23,7 @@ public class ServerThread extends Thread {
       long lasttime = System.currentTimeMillis();
       boolean disconTimer = true;
       boolean waitfordata = false;
-      JsonObject data = new JsonObject();
+      JsonObject data;
 
       do {
         text = reader.readLine();
