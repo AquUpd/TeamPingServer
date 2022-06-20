@@ -3,6 +3,7 @@ package com.aqupd.teampingserver;
 import java.io.*;
 import java.net.*;
 
+@SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static void main(String[] args) {
     try (ServerSocket serverSocket = new ServerSocket(28754)) {

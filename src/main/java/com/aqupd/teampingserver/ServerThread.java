@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import java.io.*;
 import java.net.*;
 
+@SuppressWarnings("ConstantConditions")
 public class ServerThread extends Thread {
   private final Socket socket;
 
