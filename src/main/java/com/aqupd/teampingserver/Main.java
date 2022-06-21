@@ -1,6 +1,5 @@
 package com.aqupd.teampingserver;
 
-import com.google.gson.JsonObject;
 import java.awt.*;
 import java.io.*;
 import java.net.*;
@@ -11,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 @SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static Map<Integer, Color> colors = new HashMap<>();
-  public static JsonObject pingdata = new JsonObject();
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
 
   public static void main(String[] args) {
@@ -22,7 +20,7 @@ public class Main {
     colors.put(4, new Color(20,149,207));
     colors.put(5, new Color(62,94,171));
     colors.put(6, new Color(124,54,150));
-    colors.put(7, new Color(167,30,72));
+    colors.put(7, new Color(0,250,90));
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
 
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());

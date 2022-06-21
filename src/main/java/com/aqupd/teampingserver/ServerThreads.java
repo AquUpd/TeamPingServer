@@ -24,13 +24,18 @@ public class ServerThreads {
 
   public ServerThreads(Socket socket) {
     this.socket = socket;
-    new Reader().start();
-    new Writer().start();
+    ThreadGroup tg = new ThreadGroup(socket.getRemoteSocketAddress().toString());
+    new Reader(tg, "Reader").start();
+    new Writer(tg, "Writer").start();
     Random rng = new Random();
     randomcolor = colors.get(rng.nextInt(colors.size()));
   }
 
-  private class Reader extends Thread{
+  private class Reader extends Thread {
+    Reader(ThreadGroup tg, String name) {
+      super(tg, name);
+    }
+
     public void run() {
       try {
         InputStream input = socket.getInputStream();
@@ -63,6 +68,7 @@ public class ServerThreads {
             }
           } else {
             data = JsonParser.parseString(text).getAsJsonObject();
+            LOGGER.info("received ping" + data);
 
             JsonArray clr = new JsonArray();
             clr.add(randomcolor.getRed());
@@ -70,10 +76,12 @@ public class ServerThreads {
             clr.add(randomcolor.getBlue());
             data.add("color", clr);
             data.add("nickname", new JsonPrimitive(nickname));
-            LOGGER.info("received ping + edited " + data);
-            pingdata = data;
+
+            JsonObject jo = data.getAsJsonObject();
+
           }
         } while (!text.equals("DISCONNECT"));
+        LOGGER.info("Reader stopped");
         closed = true;
         socket.close();
         interrupt();
@@ -85,7 +93,11 @@ public class ServerThreads {
   }
 
   @SuppressWarnings("ConstantConditions")
-  private class Writer extends Thread{
+  private class Writer extends Thread {
+    Writer(ThreadGroup tg, String name) {
+      super(tg, name);
+    }
+
     public void run() {
       try {
         OutputStream output = socket.getOutputStream();
@@ -115,11 +127,7 @@ public class ServerThreads {
               step++;
             }
           } else {
-            if(pingdata.size() != 0 && !pingdata.get("nickname").getAsString().equals(nickname)){
-              LOGGER.info("sent ping " + nickname + " " + pingdata);
-              writer.println(pingdata);
-              pingdata = new JsonObject();
-            }
+
           }
         } while (!closed);
         LOGGER.info("Client disconnected! " + socket.getRemoteSocketAddress());
