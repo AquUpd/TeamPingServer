@@ -5,11 +5,14 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static Map<Integer, Color> colors = new HashMap<>();
   public static JsonObject pingdata = new JsonObject();
+  public static final Logger LOGGER = LogManager.getLogger("TeamPing");
 
   public static void main(String[] args) {
     colors.put(0, new Color(240,49,36));
@@ -22,17 +25,16 @@ public class Main {
     colors.put(7, new Color(167,30,72));
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
 
-      System.out.println("Server is listening on port " + serverSocket.getLocalPort());
-
+      LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
       while (true) {
         Socket socket = serverSocket.accept();
-        System.out.println("New client connected! " + socket.getRemoteSocketAddress());
+        LOGGER.info("New client connected! " + socket.getRemoteSocketAddress());
 
         new ServerThreads(socket);
       }
 
     } catch (IOException ex) {
-      System.out.println("Server exception: " + ex.getMessage());
+      LOGGER.error("Server exception: ", ex);
       ex.printStackTrace();
     }
   }
