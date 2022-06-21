@@ -14,7 +14,8 @@ public class Main {
         Socket socket = serverSocket.accept();
         System.out.println("New client connected! " + socket.getRemoteSocketAddress());
 
-        new ServerThread(socket).start();
+        new ServerReaderThread(socket).start();
+        new ServerWriterThread(socket).start();
       }
 
     } catch (IOException ex) {
