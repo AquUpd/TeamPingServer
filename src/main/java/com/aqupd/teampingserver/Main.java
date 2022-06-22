@@ -21,16 +21,14 @@ public class Main {
     colors.put(5, new Color(62,94,171));
     colors.put(6, new Color(124,54,150));
     colors.put(7, new Color(0,250,90));
+    new Pings.PingsCleaner().start();
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
-
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
       while (true) {
         Socket socket = serverSocket.accept();
         LOGGER.info("New client connected! " + socket.getRemoteSocketAddress());
-
         new ServerThreads(socket);
       }
-
     } catch (IOException ex) {
       LOGGER.error("Server exception: ", ex);
       ex.printStackTrace();

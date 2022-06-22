@@ -1,25 +1,25 @@
 package com.aqupd.teampingserver;
 
 import static com.aqupd.teampingserver.Main.*;
+import static com.aqupd.teampingserver.Pings.*;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 public class ServerThreads {
 
   private final Socket socket;
+  private final Color randomcolor;
   private int step = 0;
   private boolean init = true;
   private boolean waitfordata = false;
   private boolean closed = false;
-
-  private final Color randomcolor;
+  private List<String> sentPings = new ArrayList<>();
   private String nickname;
 
   public ServerThreads(Socket socket) {
@@ -76,9 +76,8 @@ public class ServerThreads {
             clr.add(randomcolor.getBlue());
             data.add("color", clr);
             data.add("nickname", new JsonPrimitive(nickname));
-
-            JsonObject jo = data.getAsJsonObject();
-
+            data.add("time", new JsonPrimitive(System.currentTimeMillis()));
+            if (!removingPings) Pings.addPings(data);
           }
         } while (!text.equals("DISCONNECT"));
         LOGGER.info("Reader stopped");
@@ -127,7 +126,18 @@ public class ServerThreads {
               step++;
             }
           } else {
-
+            if(!removingPings){
+              List<String> newSentPings = sentPings;
+              JsonArray ja = Pings.getPings().deepCopy();
+              for(JsonElement je : ja) {
+                JsonObject jo = je.getAsJsonObject();
+                if(!sentPings.contains(jo.get("uuid").getAsString()) && !jo.get("nickname").getAsString().equals(nickname)) {
+                  newSentPings.add(jo.get("uuid").getAsString());
+                  writer.println(jo);
+                }
+              }
+              sentPings = newSentPings;
+            }
           }
         } while (!closed);
         LOGGER.info("Client disconnected! " + socket.getRemoteSocketAddress());
