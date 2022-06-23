@@ -21,6 +21,8 @@ public class Main {
     colors.put(5, new Color(62,94,171));
     colors.put(6, new Color(124,54,150));
     colors.put(7, new Color(0,250,90));
+    colors.put(8, new Color(255, 0, 229));
+    colors.put(9, new Color(0, 225, 255));
     new Pings.PingsCleaner().start();
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
