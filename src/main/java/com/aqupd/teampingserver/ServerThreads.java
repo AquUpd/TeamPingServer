@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@SuppressWarnings("FieldMayBeFinal")
 public class ServerThreads {
 
   private final Socket socket;
@@ -48,11 +49,8 @@ public class ServerThreads {
 
         String text;
         JsonObject data;
-
-        do {
-          if (socket.isClosed()) break;
-          text = reader.readLine();
-          if (text == null) break;
+        while ((text = reader.readLine()) != null) {
+          if (closed || socket.isClosed()) break;
           if (init) {
             if (text.equals("CONNECT") && step == 0) {
               LOGGER.info(step);
@@ -87,12 +85,12 @@ public class ServerThreads {
             data.add("time", new JsonPrimitive(System.currentTimeMillis()));
             addPings(data);
           }
-        } while (!closed);
+        }
         LOGGER.info("Reader stopped");
         closed = true;
         socket.close();
         interrupt();
-      } catch (IOException ex) {
+      } catch(IOException ex){
         closed = true;
         interrupt();
       }
