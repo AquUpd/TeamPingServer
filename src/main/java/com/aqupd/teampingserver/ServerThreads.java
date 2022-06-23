@@ -14,10 +14,10 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import javax.net.ssl.HttpsURLConnection;
 
 @SuppressWarnings("FieldMayBeFinal")
 public class ServerThreads {
@@ -66,27 +66,20 @@ public class ServerThreads {
               step++;
               lastinteraction = System.currentTimeMillis();
             } else if (waitfordata && step == 4 && text.length() != 0) {
+              LOGGER.info(step + " " + text);
               data = JsonParser.parseString(text).getAsJsonObject();
-              LOGGER.info(step + " " + data);
-
               nickname = data.get("name").getAsString();
               String serverid = data.get("serverid").getAsString();
 
-              JsonObject jsonObject = new JsonObject();
-              jsonObject.add("username", new JsonPrimitive(nickname));
-              jsonObject.add("serverId", new JsonPrimitive(serverid));
+              HttpsURLConnection con = (HttpsURLConnection) new URL(String.format("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s", nickname, serverid)).openConnection();
+              con.setRequestMethod("GET");
+              con.setDoInput(true);
+              con.setReadTimeout(250);
 
-              URLConnection connection = new URL("https://sessionserver.mojang.com/session/minecraft/hasJoined").openConnection();
-              connection.setDoOutput(true);
-              connection.setDoInput(true);
-              connection.addRequestProperty("Content-Type", "application/json");
-              connection.setRequestProperty("Content-Length", String.valueOf(jsonObject.toString().length()));
-              connection.getOutputStream().write(jsonObject.toString().getBytes(StandardCharsets.UTF_8));
-              connection.setReadTimeout(250);
               try {
-                InputStream in = connection.getInputStream();
+                InputStream in = con.getInputStream();
                 BufferedReader readin = new BufferedReader(new InputStreamReader(in));
-                if (readin.readLine() != null) {
+                if (readin.readLine()!= null) {
                   license = true;
                 }
               } catch(SocketTimeoutException ex){
@@ -125,7 +118,6 @@ public class ServerThreads {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   private class Writer extends Thread {
     Writer(ThreadGroup tg, String name) {
       super(tg, name);
