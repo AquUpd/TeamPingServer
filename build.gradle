@@ -24,9 +24,11 @@ test {
 def mainClassName = getGroup() + '.Main'
 
 task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes 'Main-Class': "${mainClassName}"
     }
+
     archiveBaseName = "${rootProject.name}"
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar

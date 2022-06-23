@@ -11,6 +11,10 @@ import com.google.gson.JsonPrimitive;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -25,6 +29,7 @@ public class ServerThreads {
   private boolean init = true;
   private boolean waitfordata = false;
   private boolean closed = false;
+  private boolean license = false;
   private List<String> sentPings = new ArrayList<>();
   private String nickname;
 
@@ -60,10 +65,33 @@ public class ServerThreads {
               LOGGER.info(step);
               step++;
               lastinteraction = System.currentTimeMillis();
-            } else if (waitfordata && step == 4) {
+            } else if (waitfordata && step == 4 && text.length() != 0) {
               data = JsonParser.parseString(text).getAsJsonObject();
               LOGGER.info(step + " " + data);
+
               nickname = data.get("name").getAsString();
+              String serverid = data.get("serverid").getAsString();
+
+              JsonObject jsonObject = new JsonObject();
+              jsonObject.add("username", new JsonPrimitive(nickname));
+              jsonObject.add("serverId", new JsonPrimitive(serverid));
+
+              URLConnection connection = new URL("https://sessionserver.mojang.com/session/minecraft/hasJoined").openConnection();
+              connection.setDoOutput(true);
+              connection.setDoInput(true);
+              connection.addRequestProperty("Content-Type", "application/json");
+              connection.setRequestProperty("Content-Length", String.valueOf(jsonObject.toString().length()));
+              connection.getOutputStream().write(jsonObject.toString().getBytes(StandardCharsets.UTF_8));
+              connection.setReadTimeout(250);
+              try {
+                InputStream in = connection.getInputStream();
+                BufferedReader readin = new BufferedReader(new InputStreamReader(in));
+                if (readin.readLine() != null) {
+                  license = true;
+                }
+              } catch(SocketTimeoutException ex){
+                license = false;
+              }
               waitfordata = false;
               step++;
               lastinteraction = System.currentTimeMillis();
@@ -122,8 +150,8 @@ public class ServerThreads {
               step++;
             } else if (step == 5 && (System.currentTimeMillis() - lastinteraction) > 250) {
               LOGGER.info(step);
-              //Some kind of check in the future
-              if (true) {
+
+              if (license) {
                 writer.println("SUCCESS");
               } else {
                 writer.println("NOTSUCCESS");
