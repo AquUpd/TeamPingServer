@@ -13,7 +13,6 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -36,8 +35,8 @@ public class ServerThreads {
   public ServerThreads(Socket socket) {
     this.socket = socket;
     ThreadGroup tg = new ThreadGroup(socket.getRemoteSocketAddress().toString());
-    new Reader(tg, "Reader").start();
-    new Writer(tg, "Writer").start();
+    new Reader(tg, socket.getRemoteSocketAddress().toString() + " reader").start();
+    new Writer(tg, socket.getRemoteSocketAddress().toString() + " writer").start();
     Random rng = new Random();
     randomcolor = colors.get(rng.nextInt(colors.size()));
   }
@@ -47,6 +46,7 @@ public class ServerThreads {
       super(tg, name);
     }
 
+    @Override
     public void run() {
       try {
         InputStream input = socket.getInputStream();
@@ -54,7 +54,11 @@ public class ServerThreads {
 
         String text;
         JsonObject data;
-        while ((text = reader.readLine()) != null) {
+
+        socket.setSoTimeout(10000);
+        do {
+          text = reader.readLine();
+          if (text == null) break;
           if (closed || socket.isClosed()) break;
           if (init) {
             if (text.equals("CONNECT") && step == 0) {
@@ -93,6 +97,7 @@ public class ServerThreads {
               LOGGER.info("Waiting for new data");
               init = false;
             }
+          } else if (text.equals("PING")) {
           } else {
             data = JsonParser.parseString(text).getAsJsonObject();
             LOGGER.info("received ping" + data);
@@ -106,12 +111,13 @@ public class ServerThreads {
             data.add("time", new JsonPrimitive(System.currentTimeMillis()));
             addPings(data);
           }
-        }
+        } while (socket.isConnected());
         LOGGER.info("Reader stopped");
         closed = true;
         socket.close();
         interrupt();
       } catch(IOException ex){
+        LOGGER.error("Reader stopped");
         closed = true;
         interrupt();
       }
@@ -123,6 +129,7 @@ public class ServerThreads {
       super(tg, name);
     }
 
+    @Override
     public void run() {
       try {
         OutputStream output = socket.getOutputStream();
@@ -165,6 +172,7 @@ public class ServerThreads {
         LOGGER.info("Client disconnected! " + socket.getRemoteSocketAddress());
         interrupt();
       } catch (IOException ex) {
+        LOGGER.error("Writer exception");
         interrupt();
       }
     }

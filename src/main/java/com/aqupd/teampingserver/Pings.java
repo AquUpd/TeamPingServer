@@ -1,11 +1,10 @@
 package com.aqupd.teampingserver;
 
 import com.google.gson.JsonObject;
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
-@SuppressWarnings("InfiniteLoopStatement")
+@SuppressWarnings({"InfiniteLoopStatement","BusyWait"})
 public class Pings {
   public static BlockingQueue<JsonObject> blockingQueue = new LinkedBlockingDeque<>();
   private static JsonObject currentPing = new JsonObject();
@@ -19,8 +18,9 @@ public class Pings {
   }
 
   public static class PingsCleaner extends Thread {
-    PingsCleaner() { super(); }
+    PingsCleaner() { super(); setName("Pings Handler");}
 
+    @Override
     public void run() {
       try {
         do {
