@@ -26,6 +26,8 @@ public class Pings {
         do {
           if(blockingQueue.size() != 0) {
             currentPing = blockingQueue.take();
+          } else {
+            currentPing = new JsonObject();
           }
           Thread.sleep(25);
         } while(true);
