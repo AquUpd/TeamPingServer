@@ -30,6 +30,7 @@ public class ServerThreads {
   private boolean license = false;
   private HashMap<Long, String> sentPings = new HashMap<>();
   private String nickname;
+  private boolean debug;
 
   public ServerThreads(Socket socket) {
     this.socket = socket;
@@ -38,6 +39,7 @@ public class ServerThreads {
     new Writer(tg, socket.getRemoteSocketAddress().toString() + " writer").start();
     Random rng = new Random();
     randomcolor = colors.get(rng.nextInt(colors.size()));
+    this.debug = socket.getInetAddress().isLoopbackAddress();
   }
 
   private class Reader extends Thread {
@@ -73,20 +75,23 @@ public class ServerThreads {
               data = JsonParser.parseString(text).getAsJsonObject();
               nickname = data.get("name").getAsString();
               String serverid = data.get("serverid").getAsString();
+              if (!debug) {
+                HttpsURLConnection con = (HttpsURLConnection) new URL(String.format("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s", nickname, serverid)).openConnection();
+                con.setRequestMethod("GET");
+                con.setDoInput(true);
+                con.setReadTimeout(250);
 
-              HttpsURLConnection con = (HttpsURLConnection) new URL(String.format("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s", nickname, serverid)).openConnection();
-              con.setRequestMethod("GET");
-              con.setDoInput(true);
-              con.setReadTimeout(250);
-
-              try {
-                InputStream in = con.getInputStream();
-                BufferedReader readin = new BufferedReader(new InputStreamReader(in));
-                if (readin.readLine()!= null) {
-                  license = true;
+                try {
+                  InputStream in = con.getInputStream();
+                  BufferedReader readin = new BufferedReader(new InputStreamReader(in));
+                  if (readin.readLine() != null) {
+                    license = true;
+                  }
+                } catch (SocketTimeoutException ex) {
+                  license = false;
                 }
-              } catch(SocketTimeoutException ex){
-                license = false;
+              } else {
+                license = true;
               }
               waitfordata = false;
               step++;
