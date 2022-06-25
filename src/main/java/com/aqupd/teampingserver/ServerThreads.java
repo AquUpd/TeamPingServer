@@ -13,9 +13,8 @@ import java.io.*;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.stream.Collectors;
 import javax.net.ssl.HttpsURLConnection;
 
 @SuppressWarnings("FieldMayBeFinal")
@@ -29,7 +28,7 @@ public class ServerThreads {
   private boolean waitfordata = false;
   private boolean closed = false;
   private boolean license = false;
-  private List<String> sentPings = new ArrayList<>();
+  private HashMap<Long, String> sentPings = new HashMap<>();
   private String nickname;
 
   public ServerThreads(Socket socket) {
@@ -161,11 +160,12 @@ public class ServerThreads {
           } else {
             if(getPing().size() != 0) {
               JsonObject currentPing = getPing();
-              if(!sentPings.contains(currentPing.get("uuid").getAsString())) {
-                sentPings.add(currentPing.get("uuid").getAsString());
+              if(!sentPings.containsValue(currentPing.get("uuid").getAsString())) {
+                sentPings.put(System.currentTimeMillis(), currentPing.get("uuid").getAsString());
                 writer.println(currentPing);
               }
             }
+            sentPings.keySet().removeIf(data -> (System.currentTimeMillis() - data) > 100);
           }
         } while (!closed);
         closed = true;
