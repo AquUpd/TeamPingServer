@@ -121,7 +121,7 @@ public class ServerThreads {
         closed = true;
         socket.close();
         interrupt();
-      } catch(IOException ex){
+      } catch(IOException ex) {
         LOGGER.error("Reader stopped");
         closed = true;
         interrupt();
@@ -164,9 +164,9 @@ public class ServerThreads {
               step++;
             }
           } else {
-            if(getPing().size() != 0) {
+            if (getPing().size() != 0) {
               JsonObject currentPing = getPing();
-              if(!sentPings.containsValue(currentPing.get("uuid").getAsString())) {
+              if (!sentPings.containsValue(currentPing.get("uuid").getAsString())) {
                 sentPings.put(System.currentTimeMillis(), currentPing.get("uuid").getAsString());
                 writer.println(currentPing);
               }

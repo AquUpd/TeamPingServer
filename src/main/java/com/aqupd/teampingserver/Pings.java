@@ -13,7 +13,7 @@ public class Pings {
     blockingQueue.add(ping);
   }
 
-  public static JsonObject getPing(){
+  public static JsonObject getPing() {
     return currentPing;
   }
 
@@ -24,7 +24,7 @@ public class Pings {
     public void run() {
       try {
         do {
-          if(blockingQueue.size() != 0) {
+          if (blockingQueue.size() != 0) {
             currentPing = blockingQueue.take();
           } else {
             currentPing = new JsonObject();
