@@ -102,7 +102,7 @@ public class ServerThreads {
               init = false;
             }
           } else if (text.equals("PING")) {
-          } else {
+          } else if ((System.currentTimeMillis() - lastinteraction) > 800) {
             data = JsonParser.parseString(text).getAsJsonObject();
             LOGGER.info("received ping" + data);
 
@@ -114,6 +114,7 @@ public class ServerThreads {
             data.add("nickname", new JsonPrimitive(nickname));
             data.add("time", new JsonPrimitive(System.currentTimeMillis()));
             addPings(data);
+            lastinteraction = System.currentTimeMillis();
           }
         } while (socket.isConnected());
         LOGGER.info("Reader stopped");
