@@ -31,13 +31,13 @@ public class ServerThreads {
   private HashMap<Long, String> sentPings = new HashMap<>();
   private String nickname;
   private boolean debug;
-
+  private Random rng = new Random();
   public ServerThreads(Socket socket) {
     this.socket = socket;
     ThreadGroup tg = new ThreadGroup(socket.getRemoteSocketAddress().toString());
     new Reader(tg, socket.getRemoteSocketAddress().toString() + " reader").start();
     new Writer(tg, socket.getRemoteSocketAddress().toString() + " writer").start();
-    Random rng = new Random();
+
     randomcolor = colors.get(rng.nextInt(colors.size()));
     this.debug = socket.getInetAddress().isLoopbackAddress();
   }
