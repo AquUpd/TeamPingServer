@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 @SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static Map<Integer, Color> colors = new HashMap<>();
+  public static Map<String, Socket> conns = new HashMap<>();
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
 
   public static void main(String[] args) {
@@ -30,7 +31,6 @@ public class Main {
     colors.put(14, Color.decode("#ff9800"));
     colors.put(15, Color.decode("#ff5722"));
 
-    new Pings.PingsCleaner().start();
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
       while (true) {
