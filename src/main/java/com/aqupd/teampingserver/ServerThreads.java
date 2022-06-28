@@ -42,6 +42,7 @@ public class ServerThreads {
       boolean license = false;
       boolean init = true;
       boolean waitfordata = false;
+      boolean initwrite = false;
       long lastinteraction = 0;
       int step = 0;
 
@@ -56,61 +57,68 @@ public class ServerThreads {
 
         socket.setSoTimeout(5000);
         do {
-          text = reader.readLine();
+          if (!initwrite) text = reader.readLine(); else text = "";
           if (text == null || socket.isClosed()) break;
-          if (init) {
-            try {
-              if (text.equals("CONNECT") && step == 0) {
-                LOGGER.info(step);
-                sleep(250);
-                writer.println("YES");
-                step++;
-              } else if (text.equals("DATA") && step == 1) {
-                LOGGER.info(step);
-                sleep(250);
-                writer.println("YES");
-                step++;
-                waitfordata = true;
-              } else if (waitfordata && step == 2 && text.length() != 0) {
-                LOGGER.info(step + " " + text);
-                data = JsonParser.parseString(text).getAsJsonObject();
-                nickname = data.get("name").getAsString();
-                String serverid = data.get("serverid").getAsString();
-                if (!debug) {
-                  HttpsURLConnection con = (HttpsURLConnection) new URL(String.format("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s", nickname, serverid)).openConnection();
-                  con.setRequestMethod("GET");
-                  con.setDoInput(true);
-                  con.setReadTimeout(250);
-                  try {
-                    InputStream in = con.getInputStream();
-                    BufferedReader readin = new BufferedReader(new InputStreamReader(in));
-                    if (readin.readLine() != null) license = true;
-                  } catch (SocketTimeoutException ignored) {
-                  }
-                } else {
-                  license = true;
-                }
-                waitfordata = false;
-                sleep(250);
-
-                if (license) {
-                  writer.println("SUCCESS");
-                } else {
-                  writer.println("NOTSUCCESS");
-                  break;
-                }
-                step++;
-              } else if (text.equals("YES") && step == 3) {
-                LOGGER.info(step + " Waiting for new data");
-                init = false;
-                conns.put(nickname, socket);
+          if (init && (System.currentTimeMillis() - lastinteraction) > 250) {
+            if (text.equals("CONNECT") && step == 0) {
+              LOGGER.info(step);
+              initwrite = true;
+              step++;
+              lastinteraction = System.currentTimeMillis();
+            } else if (step == 1) {
+              LOGGER.info(step);
+              writer.println("YES");
+              initwrite = false;
+              step++;
+            } else if (text.equals("DATA") && step == 2) {
+              LOGGER.info(step);
+              initwrite = true;
+              waitfordata = true;
+              step++;
+              lastinteraction = System.currentTimeMillis();
+            } else if (step == 3) {
+              LOGGER.info(step);
+              writer.println("YES");
+              initwrite = false;
+              step++;
+            } else if (waitfordata && step == 4 && text.length() != 0) {
+              LOGGER.info(step + " " + text);
+              data = JsonParser.parseString(text).getAsJsonObject();
+              nickname = data.get("name").getAsString();
+              String serverid = data.get("serverid").getAsString();
+              if (!debug) {
+                HttpsURLConnection con = (HttpsURLConnection) new URL(String.format("https://sessionserver.mojang.com/session/minecraft/hasJoined?username=%s&serverId=%s", nickname, serverid)).openConnection();
+                con.setRequestMethod("GET");
+                con.setDoInput(true);
+                con.setReadTimeout(500);
+                try {
+                  InputStream in = con.getInputStream();
+                  BufferedReader readin = new BufferedReader(new InputStreamReader(in));
+                  if (readin.readLine() != null) license = true;
+                } catch (SocketTimeoutException ignored) {}
+              } else {
+                license = true;
               }
-            } catch (InterruptedException ex) {
-              LOGGER.error("Client thread interrupted");
-              break;
+              waitfordata = false;
+              initwrite = true;
+              step++;
+              lastinteraction = System.currentTimeMillis();
+            } else if (step == 5) {
+              LOGGER.info(step);
+              if (license) {
+                writer.println("SUCCESS");
+              } else {
+                writer.println("NOTSUCCESS");
+                break;
+              }
+              initwrite = false;
+              step++;
+            } else if (text.equals("YES") && step == 6) {
+              LOGGER.info(step + " Waiting for new data");
+              init = false;
+              conns.put(nickname, socket);
             }
-          } else if (text.equals("PING")) {
-          } else if ((System.currentTimeMillis() - lastinteraction) > 800) {
+          } else if (!text.equals("PING") && (System.currentTimeMillis() - lastinteraction) > 800) {
             data = JsonParser.parseString(text).getAsJsonObject();
             LOGGER.info("received ping" + data);
 
@@ -132,7 +140,6 @@ public class ServerThreads {
                 if (client.getValue().isClosed()) clientMap.remove();
               }
             }
-
             lastinteraction = System.currentTimeMillis();
           }
         } while (true);
