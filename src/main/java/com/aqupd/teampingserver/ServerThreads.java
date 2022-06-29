@@ -41,8 +41,7 @@ public class ServerThreads {
     public void run() {
       boolean license = false;
       boolean init = true;
-      boolean waitfordata = false;
-      boolean initwrite = false;
+      boolean writedata = false;
       long lastinteraction = 0;
       int step = 0;
 
@@ -57,31 +56,10 @@ public class ServerThreads {
 
         socket.setSoTimeout(5000);
         do {
-          if (!initwrite) text = reader.readLine(); else text = "";
+          if (!writedata) text = reader.readLine(); else text = "";
           if (text == null || socket.isClosed()) break;
           if (init && (System.currentTimeMillis() - lastinteraction) > 250) {
-            if (text.equals("CONNECT") && step == 0) {
-              LOGGER.info(step);
-              initwrite = true;
-              step++;
-              lastinteraction = System.currentTimeMillis();
-            } else if (step == 1) {
-              LOGGER.info(step);
-              writer.println("YES");
-              initwrite = false;
-              step++;
-            } else if (text.equals("DATA") && step == 2) {
-              LOGGER.info(step);
-              initwrite = true;
-              waitfordata = true;
-              step++;
-              lastinteraction = System.currentTimeMillis();
-            } else if (step == 3) {
-              LOGGER.info(step);
-              writer.println("YES");
-              initwrite = false;
-              step++;
-            } else if (waitfordata && step == 4 && text.length() != 0) {
+            if (step == 0 && text.length() != 0) {
               LOGGER.info(step + " " + text);
               data = JsonParser.parseString(text).getAsJsonObject();
               nickname = data.get("name").getAsString();
@@ -99,11 +77,10 @@ public class ServerThreads {
               } else {
                 license = true;
               }
-              waitfordata = false;
-              initwrite = true;
+              writedata = true;
               step++;
               lastinteraction = System.currentTimeMillis();
-            } else if (step == 5) {
+            } else if (step == 1) {
               LOGGER.info(step);
               if (license) {
                 writer.println("SUCCESS");
@@ -111,16 +88,14 @@ public class ServerThreads {
                 writer.println("NOTSUCCESS");
                 break;
               }
-              initwrite = false;
-              step++;
-            } else if (text.equals("YES") && step == 6) {
-              LOGGER.info(step + " Waiting for new data");
+              writedata = false;
               init = false;
               conns.put(nickname, socket);
+              LOGGER.info("Waiting for data");
             }
           } else if (!text.equals("PING") && (System.currentTimeMillis() - lastinteraction) > 800) {
             data = JsonParser.parseString(text).getAsJsonObject();
-            LOGGER.info("received ping" + data);
+            LOGGER.info("received data" + data);
 
             JsonArray clr = new JsonArray();
             clr.add(randomcolor.getRed());
