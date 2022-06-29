@@ -2,10 +2,7 @@ package com.aqupd.teampingserver;
 
 import static com.aqupd.teampingserver.Main.*;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
@@ -93,27 +90,35 @@ public class ServerThreads {
               conns.put(nickname, socket);
               LOGGER.info("Waiting for data");
             }
-          } else if (!text.equals("PING") && (System.currentTimeMillis() - lastinteraction) > 800) {
+          } else if (Utils.isJSONValid(text) && (System.currentTimeMillis() - lastinteraction) > 800) {
             data = JsonParser.parseString(text).getAsJsonObject();
             LOGGER.info("received data" + data);
 
-            JsonArray clr = new JsonArray();
-            clr.add(randomcolor.getRed());
-            clr.add(randomcolor.getGreen());
-            clr.add(randomcolor.getBlue());
-            data.add("color", clr);
-            data.add("nickname", new JsonPrimitive(nickname));
-            data.add("time", new JsonPrimitive(System.currentTimeMillis()));
+            String pingtype = data.get("datatype").getAsString();
+            switch (pingtype){
+              case "ping":
+                JsonArray clr = new JsonArray();
+                clr.add(randomcolor.getRed());
+                clr.add(randomcolor.getGreen());
+                clr.add(randomcolor.getBlue());
+                data.add("color", clr);
+                data.add("nickname", new JsonPrimitive(nickname));
+                data.add("time", new JsonPrimitive(System.currentTimeMillis()));
 
-            Iterator<Map.Entry<String, Socket>> clientMap = conns.entrySet().iterator();
-            while(clientMap.hasNext()){
-              Map.Entry<String, Socket> client = clientMap.next();
-              try {
-                PrintWriter swriter = new PrintWriter(client.getValue().getOutputStream(), true);
-                swriter.println(data);
-              } catch (SocketException ex) {
-                if (client.getValue().isClosed()) clientMap.remove();
-              }
+                Iterator<Map.Entry<String, Socket>> clientMap = conns.entrySet().iterator();
+                while(clientMap.hasNext()){
+                  Map.Entry<String, Socket> client = clientMap.next();
+                  try {
+                    PrintWriter swriter = new PrintWriter(client.getValue().getOutputStream(), true);
+                    swriter.println(data);
+                  } catch (SocketException ex) {
+                    if (client.getValue().isClosed()) clientMap.remove();
+                  }
+                }
+                break;
+              case "party":
+
+                break;
             }
             lastinteraction = System.currentTimeMillis();
           }

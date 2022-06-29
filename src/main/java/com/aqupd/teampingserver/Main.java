@@ -11,7 +11,7 @@ import org.apache.logging.log4j.Logger;
 public class Main {
   public static Map<Integer, Color> colors = new HashMap<>();
   public static Map<String, Socket> conns = new HashMap<>();
-  public static Map<String, Map<String, String[]>> parties = new HashMap<>();
+  public static Map<String, String[]> parties = new HashMap<>();
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
 
   public static void main(String[] args) {
