@@ -4,14 +4,14 @@ import java.awt.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 @SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static Map<Integer, Color> colors = new HashMap<>();
-  public static Map<String, Socket> conns = new HashMap<>();
-  public static Map<String, String[]> parties = new HashMap<>();
+  public static Map<String, Map<String, Socket>> parties = new HashMap<>();
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
 
   public static void main(String[] args) {

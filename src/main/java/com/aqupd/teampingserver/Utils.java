@@ -1,15 +1,13 @@
 package com.aqupd.teampingserver;
 
-import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 
 public class Utils {
-  private static final Gson gson = new Gson();
-
-  public static boolean isJSONValid(String jsonInString) {
+  public static boolean isValidJsonObject(String input) {
     try {
-      gson.fromJson(jsonInString, Object.class);
+      JsonParser.parseString(input).getAsJsonObject();
       return true;
-    } catch(com.google.gson.JsonSyntaxException ex) {
+    } catch (IllegalStateException ex) {
       return false;
     }
   }
