@@ -146,7 +146,16 @@ public class ServerThreads {
                       local.put(nickname, socket);
                       parties.put(partyname, local);
                     }
-                    LOGGER.info(parties.get(partyname).toString());
+                    JsonObject jo = new JsonObject();
+                    JsonArray ja = new JsonArray();
+                    Map<String, Socket> conns = parties.get(partyname);
+                    for (String client : conns.keySet()) ja.add(client);
+                    jo.add("datatype", new JsonPrimitive("party"));
+                    jo.add("subtype", new JsonPrimitive("list"));
+                    jo.add("players", ja);
+
+                    writer.println(jo);
+                    LOGGER.info(parties.get(partyname).toString() + " " + jo);
                     break;
                   case "kick":
 
@@ -154,7 +163,9 @@ public class ServerThreads {
                   case "disconnect":
                     parties.get(partyname).remove(nickname);
                     if (parties.get(partyname).isEmpty()) parties.remove(partyname);
+                    break;
                 }
+                break;
             }
           }
         } while (true);
