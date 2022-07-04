@@ -98,31 +98,40 @@ public class ServerThreads {
 
             switch (data.get("datatype").getAsString()) {
               case "ping":
-                generatePingJson(partyname, data);
+                if (partyname.length() > 0) {
+                  generatePingJson(partyname, data);
+                }
                 lastinteraction = System.currentTimeMillis();
                 break;
               case "party":
                 switch (data.get("subtype").getAsString()) {
                   case "connect":
-                    partyname = data.get("partyname").getAsString();
-                    Map<String, Socket> local = new HashMap<>();
-                    if (parties.containsKey(partyname)) {
-                      parties.get(partyname).put(nickname, socket);
-                    } else {
-                      local.put(nickname, socket);
-                      parties.put(partyname, local);
+                    if(partyname.length() == 0) {
+                      partyname = data.get("partyname").getAsString();
+                      LinkedHashMap<String, Socket> local = new LinkedHashMap<>();
+                      if (parties.containsKey(partyname)) {
+                        parties.get(partyname).put(nickname, socket);
+                      } else {
+                        local.put(nickname, socket);
+                        parties.put(partyname, local);
+                      }
                     }
                     sendPlayerList(partyname);
                     LOGGER.info(parties.get(partyname).toString());
                     break;
                   case "kick":
+                    if(partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
 
+                    }
                     break;
                   case "disconnect":
-                    parties.get(partyname).remove(nickname);
-                    if (parties.get(partyname).isEmpty()) parties.remove(partyname);
-                    else sendPlayerList(partyname);
-                    partyname = "";
+                    if(partyname.length() != 0) {
+                      parties.get(partyname).remove(nickname);
+                      if (parties.get(partyname).isEmpty()) parties.remove(partyname);
+                      else sendPlayerList(partyname);
+                      partyname = "";
+                    }
+                    LOGGER.info(parties.toString());
                     break;
                 }
                 break;
@@ -138,7 +147,8 @@ public class ServerThreads {
         if(license && !init && partyname.length() != 0) {
           parties.get(partyname).keySet().removeIf(nick -> nickname.equals(nick));
           if (parties.get(partyname).isEmpty()) parties.remove(partyname);
-          System.out.println(parties.toString());
+          else sendPlayerList(partyname);
+          LOGGER.info(parties.toString());
         }
       }
     }
@@ -192,8 +202,6 @@ public class ServerThreads {
     ping.add("time", new JsonPrimitive(System.currentTimeMillis()));
     ping.add("uuid", jsonObject.get("uuid"));
 
-    if (party.length() > 0) {
-      sendDataToParty(party, ping);
-    }
+    sendDataToParty(party, ping);
   }
 }
