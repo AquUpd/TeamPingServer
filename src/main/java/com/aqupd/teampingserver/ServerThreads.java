@@ -7,7 +7,6 @@ import com.google.gson.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.*;
@@ -71,8 +70,7 @@ public class ServerThreads {
                     InputStream in = con.getInputStream();
                     BufferedReader readin = new BufferedReader(new InputStreamReader(in));
                     if (readin.readLine() != null) license = true;
-                  } catch (SocketTimeoutException ignored) {
-                  }
+                  } catch (SocketTimeoutException ignored) {}
                 } else {
                   license = true;
                 }
@@ -83,6 +81,7 @@ public class ServerThreads {
                 LOGGER.info(step);
                 if (license) {
                   writer.println("SUCCESS");
+                  playerCount++;
                 } else {
                   writer.println("NOTSUCCESS");
                   break;
@@ -94,7 +93,6 @@ public class ServerThreads {
             }
           } else if (isValidJsonObject(text) && (System.currentTimeMillis() - lastinteraction) > 800) {
             data = JsonParser.parseString(text).getAsJsonObject();
-            LOGGER.info("received data" + data);
 
             switch (data.get("datatype").getAsString()) {
               case "ping":
@@ -106,35 +104,106 @@ public class ServerThreads {
               case "party":
                 switch (data.get("subtype").getAsString()) {
                   case "connect":
-                    if(partyname.length() == 0) {
-                      partyname = data.get("partyname").getAsString();
+                    String pname = data.get("partyname").getAsString();
+                    if (partyname.length() == 0 && pname.length() >= 3 && pname.length() <= 32) {
                       LinkedHashMap<String, Socket> local = new LinkedHashMap<>();
-                      if (parties.containsKey(partyname)) {
-                        parties.get(partyname).put(nickname, socket);
+                      if (parties.containsKey(pname)) {
+                        if (banlist.get(pname).contains(nickname)) {
+                          partyname = "";
+                          JsonObject jo = new JsonObject();
+                          jo.add("datatype", new JsonPrimitive("party"));
+                          jo.add("subtype", new JsonPrimitive("kickmessage"));
+                          jo.add("message", new JsonPrimitive("banned"));
+                          sendDataToSocket(socket, jo);
+                        } else if (parties.get(pname).size() > 8) {
+                          partyname = "";
+                          JsonObject jo = new JsonObject();
+                          jo.add("datatype", new JsonPrimitive("party"));
+                          jo.add("subtype", new JsonPrimitive("kickmessage"));
+                          jo.add("message", new JsonPrimitive("playerlimit"));
+                          sendDataToSocket(socket, jo);
+                        } else {
+                          parties.get(pname).put(nickname, socket);
+                          partyname = pname;
+                          sendPlayerList(partyname);
+                        }
                       } else {
                         local.put(nickname, socket);
-                        parties.put(partyname, local);
+                        parties.put(pname, local);
+                        banlist.put(pname, new ArrayList<>());
+                        partyname = pname;
+                        sendPlayerList(partyname);
                       }
                     }
-                    sendPlayerList(partyname);
-                    LOGGER.info(parties.get(partyname).toString());
                     break;
                   case "kick":
-                    if(partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
-
+                    if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
+                      String kickname = data.get("nick").getAsString();
+                      if(!kickname.equals(nickname)) {
+                        Socket kickedsocket = parties.get(partyname).get(kickname);
+                        parties.get(partyname).remove(kickname);
+                        sendPlayerList(partyname);
+                        JsonObject jo = new JsonObject();
+                        jo.add("datatype", new JsonPrimitive("party"));
+                        jo.add("subtype", new JsonPrimitive("kickmessage"));
+                        jo.add("message", new JsonPrimitive("kicked"));
+                        sendDataToSocket(kickedsocket, jo);
+                      }
+                    }
+                    break;
+                  case "ban":
+                    if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
+                      String banname = data.get("nick").getAsString();
+                      if(!banname.equals(nickname)) {
+                        Socket bannedsocket = parties.get(partyname).get(banname);
+                        parties.get(partyname).remove(banname);
+                        banlist.get(partyname).add(banname);
+                        sendPlayerList(partyname);
+                        JsonObject jo = new JsonObject();
+                        jo.add("datatype", new JsonPrimitive("party"));
+                        jo.add("subtype", new JsonPrimitive("kickmessage"));
+                        jo.add("message", new JsonPrimitive("banned"));
+                        sendDataToSocket(bannedsocket, jo);
+                      }
+                    }
+                    break;
+                  case "promote":
+                    if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
+                      String promotename = data.get("nick").getAsString();
+                      LinkedHashMap<String, Socket> newPlayerList = new LinkedHashMap<>();
+                      if (parties.get(partyname).get(promotename) != null) {
+                        newPlayerList.put(promotename, parties.get(partyname).get(promotename));
+                        Map<String, Socket> conns = parties.get(partyname);
+                        for (Map.Entry<String, Socket> client : conns.entrySet()) {
+                          if (!Objects.equals(client.getKey(), promotename)) {
+                            newPlayerList.put(client.getKey(), client.getValue());
+                          }
+                        }
+                        parties.put(partyname, newPlayerList);
+                        sendPlayerList(partyname);
+                      }
                     }
                     break;
                   case "disconnect":
-                    if(partyname.length() != 0) {
-                      parties.get(partyname).remove(nickname);
-                      if (parties.get(partyname).isEmpty()) parties.remove(partyname);
-                      else sendPlayerList(partyname);
+                    if (partyname.length() != 0) {
+                      if (parties.get(partyname).get(nickname) != null) {
+                        parties.get(partyname).remove(nickname);
+                        if (parties.get(partyname).isEmpty()) {
+                          parties.remove(partyname);
+                          banlist.remove(partyname);
+                        }
+                        else sendPlayerList(partyname);
+                      }
                       partyname = "";
                     }
-                    LOGGER.info(parties.toString());
-                    break;
                 }
+                LOGGER.info(parties.toString());
                 break;
+              case "list":
+                JsonObject jo = new JsonObject();
+                jo.add("datatype", new JsonPrimitive("list"));
+                jo.add("connected", new JsonPrimitive(playerCount));
+                writer.println(jo);
             }
           }
         } while (true);
@@ -144,14 +213,24 @@ public class ServerThreads {
       } catch (IOException ex) {
         LOGGER.error("Connection exception");
       } finally {
-        if(license && !init && partyname.length() != 0) {
+        if (license && !init && partyname.length() != 0) {
           parties.get(partyname).keySet().removeIf(nick -> nickname.equals(nick));
-          if (parties.get(partyname).isEmpty()) parties.remove(partyname);
+          if (parties.get(partyname).isEmpty()) {
+            parties.remove(partyname);
+            banlist.remove(partyname);
+          }
           else sendPlayerList(partyname);
-          LOGGER.info(parties.toString());
+          playerCount--;
         }
       }
     }
+  }
+
+  private void sendDataToSocket(Socket socket, JsonObject data) {
+    try {
+      PrintWriter swriter = new PrintWriter(socket.getOutputStream(), true);
+      swriter.println(data);
+    } catch (IOException ignored) {}
   }
 
   private void sendDataToParty(String party, JsonObject data) {
