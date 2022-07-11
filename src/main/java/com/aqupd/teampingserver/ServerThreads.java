@@ -139,7 +139,7 @@ public class ServerThreads {
                   case "kick":
                     if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
                       String kickname = data.get("nick").getAsString();
-                      if(!kickname.equals(nickname)) {
+                      if (!kickname.equals(nickname) && parties.get(partyname).containsKey(kickname)) {
                         Socket kickedsocket = parties.get(partyname).get(kickname);
                         parties.get(partyname).remove(kickname);
                         sendPlayerList(partyname);
@@ -154,7 +154,7 @@ public class ServerThreads {
                   case "ban":
                     if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
                       String banname = data.get("nick").getAsString();
-                      if(!banname.equals(nickname)) {
+                      if (!banname.equals(nickname) && parties.get(partyname).containsKey(banname)) {
                         Socket bannedsocket = parties.get(partyname).get(banname);
                         parties.get(partyname).remove(banname);
                         banlist.get(partyname).add(banname);
@@ -171,7 +171,7 @@ public class ServerThreads {
                     if (partyname.length() != 0 && parties.get(partyname).keySet().toArray()[0].equals(nickname)) {
                       String promotename = data.get("nick").getAsString();
                       LinkedHashMap<String, Socket> newPlayerList = new LinkedHashMap<>();
-                      if (parties.get(partyname).get(promotename) != null) {
+                      if (parties.get(partyname).containsKey(promotename)) {
                         newPlayerList.put(promotename, parties.get(partyname).get(promotename));
                         Map<String, Socket> conns = parties.get(partyname);
                         for (Map.Entry<String, Socket> client : conns.entrySet()) {
@@ -213,14 +213,16 @@ public class ServerThreads {
       } catch (IOException ex) {
         LOGGER.error("Connection exception");
       } finally {
-        if (license && !init && partyname.length() != 0) {
-          parties.get(partyname).keySet().removeIf(nick -> nickname.equals(nick));
-          if (parties.get(partyname).isEmpty()) {
-            parties.remove(partyname);
-            banlist.remove(partyname);
-          }
-          else sendPlayerList(partyname);
+        if(license && !init) {
           playerCount--;
+          if(partyname.length() != 0) {
+            parties.get(partyname).keySet().removeIf(nick -> nickname.equals(nick));
+            if (parties.get(partyname).isEmpty()) {
+              parties.remove(partyname);
+              banlist.remove(partyname);
+            }
+            else sendPlayerList(partyname);
+          }
         }
       }
     }
