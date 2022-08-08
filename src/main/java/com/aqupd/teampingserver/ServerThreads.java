@@ -83,6 +83,7 @@ public class ServerThreads {
                 if (license) {
                   writer.println("SUCCESS");
                   playerCount++;
+                  checkCurVerOnGithub();
                 } else {
                   writer.println("NOTSUCCESS");
                   break;
@@ -213,7 +214,7 @@ public class ServerThreads {
         socket.close();
         interrupt();
       } catch (Exception ex) {
-        LOGGER.error("Connection exception");
+        LOGGER.error("Connection exception", ex);
       } finally {
         if(license && !init) {
           playerCount--;
@@ -287,5 +288,17 @@ public class ServerThreads {
     ping.add("uuid", jsonObject.get("uuid"));
 
     sendDataToParty(party, ping);
+  }
+
+  private void checkCurVerOnGithub() {
+    if(System.currentTimeMillis()-lastVersionCheck > 1800000) {
+      try {
+        Scanner s = new Scanner(new URL("https://raw.githubusercontent.com/Ivan-Khar/TeamPing/master/CurrentVersion.txt").openStream());
+        version = s.next();
+        lastVersionCheck = System.currentTimeMillis();
+      } catch (IOException ex) {
+        LOGGER.error("Couldn't get current version of the mod", ex);
+      }
+    }
   }
 }

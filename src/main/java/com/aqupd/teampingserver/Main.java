@@ -17,8 +17,8 @@ public class Main {
   public static Map<String, List<String>> banlist = new HashMap<>();
   public static int playerCount = 0;
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
-  public static final String version = "0.1.2";
-
+  public static String version = "debug";
+  public static Long lastVersionCheck = 0L;
   public static Color[] colors = new Color[] {
     Color.decode("#f44336"),
     Color.decode("#e81e63"),
@@ -41,9 +41,13 @@ public class Main {
   public static void main(String[] args) {
 
     try {
-      Path dir = Paths.get(System.getProperty("user.dir") + "/logs");
-      Files.createDirectory(dir);
-    } catch (IOException ignored) {}
+      URL url = new URL("https://raw.githubusercontent.com/Ivan-Khar/TeamPing/master/CurrentVersion.txt");
+      Scanner s = new Scanner(url.openStream());
+      version = s.next();
+      lastVersionCheck = System.currentTimeMillis();
+    } catch(IOException ex) {
+      LOGGER.error("Couldn't get current version of the mod", ex);
+    }
 
     try (ServerSocket serverSocket = new ServerSocket(28754)) {
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
@@ -54,7 +58,6 @@ public class Main {
       }
     } catch (IOException ex) {
       LOGGER.error("Server exception: ", ex);
-      ex.printStackTrace();
     }
   }
 }
