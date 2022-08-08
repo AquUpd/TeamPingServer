@@ -22,10 +22,11 @@ public class ServerThreads {
 
   public ServerThreads(Socket socket) {
     this.socket = socket;
-    new Client(socket.getRemoteSocketAddress().toString()).start();
+    String thread = socket.getRemoteSocketAddress().toString();
+    new Client(thread.substring(1, thread.indexOf(".")) + "##" + thread.substring(thread.length()-9)).start();
 
     Random rng = new Random();
-    randomcolor = colors.get(rng.nextInt(colors.size()));
+    randomcolor = colors[rng.nextInt(colors.length-1)];
     this.debug = socket.getInetAddress().isLoopbackAddress();
   }
 
@@ -197,12 +198,13 @@ public class ServerThreads {
                       partyname = "";
                     }
                 }
-                LOGGER.info(parties.toString());
+                LOGGER.info(parties.keySet().toString());
                 break;
               case "list":
                 JsonObject jo = new JsonObject();
                 jo.add("datatype", new JsonPrimitive("list"));
                 jo.add("connected", new JsonPrimitive(playerCount));
+                jo.add("version",  new JsonPrimitive(version));
                 writer.println(jo);
             }
           }
@@ -210,7 +212,7 @@ public class ServerThreads {
         LOGGER.info("Connection stopped");
         socket.close();
         interrupt();
-      } catch (IOException ex) {
+      } catch (Exception ex) {
         LOGGER.error("Connection exception");
       } finally {
         if(license && !init) {
@@ -267,9 +269,10 @@ public class ServerThreads {
     ping.add("datatype", new JsonPrimitive("ping"));
 
     JsonArray blockpos = new JsonArray();
-    blockpos.add(jsonObject.get("bp").getAsJsonArray().get(0));
-    blockpos.add(jsonObject.get("bp").getAsJsonArray().get(1));
-    blockpos.add(jsonObject.get("bp").getAsJsonArray().get(2));
+    int x = jsonObject.get("bp").getAsJsonArray().get(0).getAsInt();
+    int y = jsonObject.get("bp").getAsJsonArray().get(1).getAsInt();
+    int z = jsonObject.get("bp").getAsJsonArray().get(2).getAsInt();
+    blockpos.add(x); blockpos.add(y); blockpos.add(z);
     ping.add("bp", blockpos);
     ping.add("type", jsonObject.get("type"));
     ping.add("isEntity", jsonObject.get("isEntity"));
