@@ -53,7 +53,8 @@ public class Main {
       LOGGER.info("Server is listening on port " + serverSocket.getLocalPort());
       while (true) {
         Socket socket = serverSocket.accept();
-        LOGGER.info("New client connected! " + socket.getRemoteSocketAddress());
+        String threadname = socket.getRemoteSocketAddress().toString();
+        LOGGER.info("New client connected! " + threadname.substring(1, threadname.indexOf(".")) + ".##" + threadname.substring(threadname.length()-9));
         new ServerThreads(socket);
       }
     } catch (IOException ex) {

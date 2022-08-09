@@ -22,8 +22,8 @@ public class ServerThreads {
 
   public ServerThreads(Socket socket) {
     this.socket = socket;
-    String thread = socket.getRemoteSocketAddress().toString();
-    new Client(thread.substring(1, thread.indexOf(".")) + "##" + thread.substring(thread.length()-9)).start();
+    String threadname = socket.getRemoteSocketAddress().toString();
+    new Client(threadname.substring(1, threadname.indexOf(".")) + ".##" + threadname.substring(threadname.length()-9)).start();
 
     Random rng = new Random();
     randomcolor = colors[rng.nextInt(colors.length-1)];
