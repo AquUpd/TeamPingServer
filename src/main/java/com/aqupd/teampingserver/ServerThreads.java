@@ -127,14 +127,14 @@ public class ServerThreads {
                         } else {
                           parties.get(pname).put(nickname, socket);
                           partyname = pname;
-                          sendPlayerList(partyname);
+                          updatePartyData(partyname);
                         }
                       } else {
                         local.put(nickname, socket);
                         parties.put(pname, local);
                         banlist.put(pname, new ArrayList<>());
                         partyname = pname;
-                        sendPlayerList(partyname);
+                        updatePartyData(partyname);
                       }
                     }
                     break;
@@ -144,7 +144,7 @@ public class ServerThreads {
                       if (!kickname.equals(nickname) && parties.get(partyname).containsKey(kickname)) {
                         Socket kickedsocket = parties.get(partyname).get(kickname);
                         parties.get(partyname).remove(kickname);
-                        sendPlayerList(partyname);
+                        updatePartyData(partyname);
                         JsonObject jo = new JsonObject();
                         jo.add("datatype", new JsonPrimitive("party"));
                         jo.add("subtype", new JsonPrimitive("kickmessage"));
@@ -160,7 +160,7 @@ public class ServerThreads {
                         Socket bannedsocket = parties.get(partyname).get(banname);
                         parties.get(partyname).remove(banname);
                         banlist.get(partyname).add(banname);
-                        sendPlayerList(partyname);
+                        updatePartyData(partyname);
                         JsonObject jo = new JsonObject();
                         jo.add("datatype", new JsonPrimitive("party"));
                         jo.add("subtype", new JsonPrimitive("kickmessage"));
@@ -182,7 +182,15 @@ public class ServerThreads {
                           }
                         }
                         parties.put(partyname, newPlayerList);
-                        sendPlayerList(partyname);
+                        updatePartyData(partyname);
+                      }
+                    }
+                    break;
+                  case "public":
+                    if(partyname.length() != 0) {
+                      boolean pub = data.get("pub").getAsBoolean();
+                      if(pub) {
+                        publicList.add(partyname);
                       }
                     }
                     break;
@@ -194,7 +202,7 @@ public class ServerThreads {
                           parties.remove(partyname);
                           banlist.remove(partyname);
                         }
-                        else sendPlayerList(partyname);
+                        else updatePartyData(partyname);
                       }
                       partyname = "";
                     }
@@ -224,7 +232,7 @@ public class ServerThreads {
               parties.remove(partyname);
               banlist.remove(partyname);
             }
-            else sendPlayerList(partyname);
+            else updatePartyData(partyname);
           }
         }
       }
@@ -252,15 +260,15 @@ public class ServerThreads {
     }
   }
 
-  private void sendPlayerList(String party) {
+  private void updatePartyData(String party) {
     JsonObject jo = new JsonObject();
     JsonArray ja = new JsonArray();
     Map<String, Socket> conns1 = parties.get(party);
     for (String client : conns1.keySet()) ja.add(client);
     jo.add("datatype", new JsonPrimitive("party"));
     jo.add("subtype", new JsonPrimitive("list"));
+    jo.add("isPublic", new JsonPrimitive(publicList.contains(party)));
     jo.add("players", ja);
-
     sendDataToParty(party, jo);
   }
 

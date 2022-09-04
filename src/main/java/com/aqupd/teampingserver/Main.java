@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 @SuppressWarnings("InfiniteLoopStatement")
 public class Main {
   public static Map<String, LinkedHashMap<String, Socket>> parties = new HashMap<>();
+  public static SortedSet<String> publicList = new TreeSet<>();
   public static Map<String, List<String>> banlist = new HashMap<>();
   public static int playerCount = 0;
   public static final Logger LOGGER = LogManager.getLogger("TeamPing");
