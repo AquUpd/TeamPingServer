@@ -1,15 +1,23 @@
 package com.aqupd.teampingserver.party;
 
-import java.awt.*;
+import com.aqupd.teampingserver.ping.PingColor;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Member {
 
-  Socket socket;
-  String nickname;
-  Color color;
+  private transient final Logger LOG = LogManager.getLogger("TeamPing");
 
-  public Member(Socket socket, String name, Color color) {
+  private String nickname;
+  private PingColor color;
+  private transient Socket socket;
+
+  public Member(Socket socket, String name, PingColor color) {
     this.socket = socket;
     this.nickname = name;
     this.color = color;
@@ -17,12 +25,17 @@ public class Member {
 
   public Socket getSocket() { return socket; }
   public String getNickname() { return nickname; }
-  public Color getColor() { return color; }
+  public PingColor getColor() { return color; }
 
-  public void setColor(Color color) { this.color = color; }
+  public void setColor(PingColor color) { this.color = color; }
 
-  @Override
-  public String toString() {
-    return "{\"nickname\":\"" + nickname + "\",\"color\":" + (256 * 256 * color.getRed() + 256 * color.getGreen() + color.getBlue()) + "}";
+  public void sendData(String data) {
+    try {
+      OutputStream output = socket.getOutputStream();
+      PrintWriter writer = new PrintWriter(output, true);
+      writer.println(data);
+    } catch(IOException ex) {
+      LOG.error("Got exception while trying to write to the socket", ex);
+    }
   }
 }

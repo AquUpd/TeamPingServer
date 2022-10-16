@@ -1,7 +1,8 @@
 package com.aqupd.teampingserver.utils;
 
-import com.aqupd.teampingserver.Main;
 import com.google.gson.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 
@@ -10,6 +11,7 @@ public class Config {
   private Config() {}                       //Create Instance
   public static Config get = new Config();  //Of this class
 
+  private final Logger LOG = LogManager.getLogger("TeamPing");
   private final File confFile = new File("./config.json");
   Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -33,7 +35,7 @@ public class Config {
       if((setting = data.get("ip")) != null) ip = setting.getAsString();
       if((setting = data.get("port")) != null) port = setting.getAsInt();
     } catch (FileNotFoundException ex) {
-      Main.LOGGER.trace("Couldn't load configuration file", ex);
+      LOG.trace("Couldn't load configuration file", ex);
     }
   }
 
@@ -51,7 +53,7 @@ public class Config {
       printwriter.print(gson.toJson(jo));
       printwriter.close();
     } catch (IOException ex) {
-      Main.LOGGER.trace("Couldn't save configuration file", ex);
+      LOG.trace("Couldn't save configuration file", ex);
     }
   }
 }

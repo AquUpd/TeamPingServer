@@ -4,14 +4,14 @@ import com.aqupd.teampingserver.party.Member;
 
 public class Ping {
 
-  Position pos;
-  public Ping(Position pos, Member member, Boolean IsEntity) {
+  private Position pos;
+  private Member member;
+  private boolean isEntity;
 
-  }
-
-  public Ping deserialize(String data) {
-
-    return null;
+  public Ping(Position pos, Member member, Boolean isEntity) {
+    this.pos = pos;
+    this.member = member;
+    this.isEntity = isEntity;
   }
 
 }
