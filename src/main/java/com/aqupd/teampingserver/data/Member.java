@@ -27,14 +27,4 @@ public class Member {
   public PingColor getColor() { return color; }
 
   public void setColor(PingColor color) { this.color = color; }
-
-  public void sendData(String data) {
-    try {
-      OutputStream output = socket.getOutputStream();
-      PrintWriter writer = new PrintWriter(output, true);
-      writer.println(data);
-    } catch(IOException ex) {
-      LOG.error("Got exception while trying to write to the socket", ex);
-    }
-  }
 }

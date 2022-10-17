@@ -64,11 +64,5 @@ public class Party {
     //Send "kicked" member message that he got kicked/banned
 
   }
-
-  public void sendData(String data) {
-    for(Member member: memberList) {
-      member.sendData(data);
-    }
-  }
 }
 
