@@ -1,4 +1,4 @@
-package com.aqupd.teampingserver.party;
+package com.aqupd.teampingserver.data;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

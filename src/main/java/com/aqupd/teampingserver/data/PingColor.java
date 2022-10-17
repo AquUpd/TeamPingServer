@@ -1,4 +1,4 @@
-package com.aqupd.teampingserver.ping;
+package com.aqupd.teampingserver.data;
 
 
 public class PingColor {

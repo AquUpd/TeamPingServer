@@ -1,6 +1,4 @@
-package com.aqupd.teampingserver.ping;
-
-import com.aqupd.teampingserver.party.Member;
+package com.aqupd.teampingserver.data;
 
 public class Ping {
 

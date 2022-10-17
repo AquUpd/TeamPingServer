@@ -1,6 +1,5 @@
-package com.aqupd.teampingserver.party;
+package com.aqupd.teampingserver.data;
 
-import com.aqupd.teampingserver.ping.PingColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
